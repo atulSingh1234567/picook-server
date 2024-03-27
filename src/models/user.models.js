@@ -15,7 +15,7 @@ const userSchema = new Schema({
         required: function(){return !this.gmailSignedup}
     },
     birth: {
-        type: String
+        type: String 
     },
     username: {
         type: String,
@@ -31,31 +31,35 @@ const userSchema = new Schema({
     avatar: {
         type: String
     },
-    gmailSignedup: {
+    gmailSignedUp: {
         type: Boolean,
         required: true,
         default: false
     },
     googleName: {
         type: String,
-        required: true
+        required: function(){return this.gmailSignedUp}
     },
     viewedPhoto: [{
         type: Schema.Types.ObjectId,
         ref: 'Photo'
     }],
     refreshToken: {
-        type: String,
-        required: true
+        type: String
     }
 })
 
 userSchema.pre('save' , async function(next){
-    if(!this.isModified('password') || this.gmailSignedup){
-        next()
+    try {
+        if (!this.isModified('password')) {
+            return next();
+        }
+        this.password = await bcrypt.hash(this.password, 10);
+        console.log(this.password, " from userSchema.pre() function");
+        next();
+    } catch (error) {
+        next(error);
     }
-    this.password = bcrypt.hash(this.password,10);
-    next()
 })
 
 userSchema.methods.isPasswordCorrect = async function(password){
