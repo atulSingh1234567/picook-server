@@ -1,10 +1,12 @@
 import jwt from 'jsonwebtoken';
 import {User} from '../models/user.models.js'
 export const verifyJWT = async (req,res,next)=>{
-    const token = req.cookies?.accessToken || req.header('Authorization')?.replace('Bearer ' , '');
-
+    
+    const token = req.cookies?.accessToken || req.body.accessToken;
+    console.log(req.cookies)
+    
     if(!token){
-        throw new Error("access token not found");
+        return res.status(401).send('Access token not found');
     }
 
     const decodedInfo = jwt.verify(token , process.env.ACCESS_TOKEN_SECRET)

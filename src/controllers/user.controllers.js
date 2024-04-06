@@ -1,41 +1,96 @@
 import { User } from "../models/user.models.js";
 
+
+export const setCookie = async (req , res)=>{
+    res.cookie('name' ,  "atul singh");
+    return res.send("set up cookie page");
+}
+
 const registerUser = async (req,res)=>{
-    const {email ,gmailSignedUp, birth, password,googleName} = req.body;
-    console.log(email, password, birth)
+    const {email ,gmailSignedUp, birth, password} = req.body;
+    
     // validation
-    if( !gmailSignedUp &&( !email || !password)){
-        throw new Error("All fields required")
+    
+    if(( !email || !password)){
+        return res.status(400).json({
+            message: 'All fields required'
+        })
     }
 
     // checking user with email
     const existedUser = await User.findOne({email});
     if(existedUser){
-        throw new Error("User already exists")
+        return res.status(409).json({
+            message: 'User already exists'
+        })
     }
 
     // create user
     try {
+        const rgx = /^[^@]*/;
+        const username = email.match(rgx)
+
         const user = await User.create({
             email,
             password,
-            googleName,
+            birth,
             gmailSignedUp,
-            birth
+            username:username[0]
         })
+
         
-        const createdUser = await User.findById(user._id).select("-password -refreshToken -gmailSignedUp")
+        const createdUser = await User.findById(user._id).select("-password -refreshToken")
         if(!createdUser){
             return res.status(500).send('Something went wrong while signing up')
         }
 
         return res.status(200).send(createdUser)
     } catch (error) {
-        res.status(500).send("Error occured while registering...")
-        console.log(error)
+        return res.status(500).send("Error occured while registering...")
     }
 
 }
+
+export const editProfile = async (req , res)=>{
+    try {
+        const {firstname , username, lastname, avatar} = req.body.userDetails;
+        await User.findByIdAndUpdate(
+            req.user._id,
+            {
+                $set: {
+                    username,
+                    firstname,
+                    lastname,
+                    avatar
+                }
+            },
+            {
+                new: true
+            }
+        )
+
+        const user = await User.findById(req.user._id).select("-password -refreshToken")
+    
+        return res.status(200).json({message: 'Profile has been edited' , user })
+    } catch (error) {
+        return res.status(404).json({message: 'User not registered' });
+    }
+}
+
+
+// *************************************************
+
+export const fetchUser = async (req , res)=>{
+    try {
+       const user = await User.findById(req.user._id).select("-password -refreshToken");
+       return res.status(200).send(user)
+    } catch (error) {
+        return res.status(404).json({
+            message: "Signin first"
+        })
+    }
+}
+
 
 const generateAccessAndRefreshTokens = async function(userId){
      const user = await User.findById(userId);
@@ -48,60 +103,71 @@ const generateAccessAndRefreshTokens = async function(userId){
      return {accessToken , refreshToken}
 }
 
+
+
 const loginUser = async (req,res)=>{
     const {email,password} = req.body;
 
     const user = await User.findOne({email});
     if(!user){
-        throw new Error("User doesn't exist, please signup first");
+        return res.status(404).json({message:"User doesn't exist, please signup first"});
     }
     
     const isPasswordValid = await user.isPasswordCorrect(password);
     if(!isPasswordValid){
-        throw new Error("Invalid user credentials");
+        return res.status(401).json( {message : "Invalid user credentials"});
     }
 
     const {accessToken , refreshToken} = await generateAccessAndRefreshTokens(user._id);
-    const loggedInUser = await User.findById(user._id).select("-password -refreshToken -gmailSignedUp")
+  
+    res.cookie('accessToken' , accessToken, {path: "/",
+    expires: new Date(Date.now() + 1000 * 30), // 30 seconds
+    httpOnly: true,
+    sameSite: "lax"
+  })
 
-    const options = {
-        httpOnly : true,
-        secure: true
-    }
+    const data = await User.findById(user._id).select("-password -refreshToken -gmailSignedUp")
+    
 
     return res.status(200)
-    .cookie("accessToken" , accessToken , options)
-    .cookie("refreshToken",refreshToken,options)
     .json({
-        loggedInUser,
-        accessToken,
-        refreshToken
+        data,
+        accessToken
     })
+
 }
 
 
-const logout = async (req, res)=>{
-     await User.findByIdAndUpdate(
-        req.user._id,
-        {
-            $set: {
-                refreshToken : undefined
-            }
-        },
-        {
-            new : true
+export const changePassword = async function(req ,res){
+    try {
+        const {password , email} = req.body.changePassword;
+    
+        if(!email){
+            return res.status(401).json({
+                message: 'Please provide email'
+            })
         }
-     )
-
-     const options = {
-        httpOnly : true,
-        secure: true
+    
+    
+        const user = await User.findById(req.user._id);
+    
+        user.password = password;
+        await user.save({validateBeforeSave: false});
+    
+        return res.status(200).json(
+            {
+                message: 'Password changed successfully'
+            }
+        )
+    } catch (error) {
+        return res.status(500).json(
+            {
+                message: 'Something went wrong'
+            }
+        )
     }
-
-
-    return res.status(200).clearCookie("accessToken" , options).clearCookie("refreshToken" , options).json({
-        message: "user loggedout successfully"
-    });
 }
 
-export {registerUser , loginUser , logout}
+
+
+export {registerUser , loginUser}

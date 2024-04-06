@@ -12,7 +12,7 @@ const userSchema = new Schema({
     },
     password: {
         type: String,
-        required: function(){return !this.gmailSignedup}
+        required: true
     },
     birth: {
         type: String 
@@ -25,25 +25,24 @@ const userSchema = new Schema({
     firstname: {
         type: String
     },
+    gmailSignedUp: {
+        type: Boolean,
+        required: true,
+        default: true
+    },
     lastname: {
         type: String
     },
     avatar: {
         type: String
     },
-    gmailSignedUp: {
-        type: Boolean,
-        required: true,
-        default: false
-    },
-    googleName: {
-        type: String,
-        required: function(){return this.gmailSignedUp}
-    },
     viewedPhoto: [{
         type: Schema.Types.ObjectId,
         ref: 'Photo'
     }],
+    follower: {
+        type: Number
+    },
     refreshToken: {
         type: String
     }
@@ -70,7 +69,8 @@ userSchema.methods.generateAccessToken = function(){
     return jwt.sign(
         {
             _id: this._id,
-            email: this.email
+            email: this.email,
+            username: this.username
         },
         process.env.ACCESS_TOKEN_SECRET,
         {
