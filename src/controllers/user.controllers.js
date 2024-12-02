@@ -7,7 +7,7 @@ export const setCookie = async (req , res)=>{
 }
 
 const registerUser = async (req,res)=>{
-    const {email ,gmailSignedUp, birth, password} = req.body;
+    const {email ,birth, password} = req.body;
     
     // validation
     
@@ -21,7 +21,7 @@ const registerUser = async (req,res)=>{
     const existedUser = await User.findOne({email});
     if(existedUser){
         return res.status(409).json({
-            message: 'User already exists'
+            message: 'Email already exists, Kindly login.'
         })
     }
 
@@ -34,12 +34,11 @@ const registerUser = async (req,res)=>{
             email,
             password,
             birth,
-            gmailSignedUp,
             username:username[0]
         })
 
         
-        const createdUser = await User.findById(user._id).select("-password -refreshToken")
+        const createdUser = await User.findById(user._id).select("-password")
         if(!createdUser){
             return res.status(500).send('Something went wrong while signing up')
         }
