@@ -29,21 +29,16 @@ const registerUser = async (req,res)=>{
     try {
         const rgx = /^[^@]*/;
         const username = email.match(rgx)
-
-        const user = await User.create({
+        await User.create({
             email,
             password,
             birth,
             username:username[0]
         })
 
-        
-        const createdUser = await User.findById(user._id).select("-password")
-        if(!createdUser){
-            return res.status(500).send('Something went wrong while signing up')
-        }
-
-        return res.status(200).send(createdUser)
+        return res.status(200).json({
+            message: "Signup Completed!"
+        })
     } catch (error) {
         return res.status(500).send("Error occured while registering...")
     }
