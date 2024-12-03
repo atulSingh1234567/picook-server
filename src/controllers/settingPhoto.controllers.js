@@ -64,7 +64,6 @@ export const fetchPhotos = async (req, res) => {
 export const savePhoto = async (req, res) => {
     try {
         const { userId, photoId } = req.body;
-
         if (!userId || !photoId) {
             return res.status(400).json({ message: "User ID and Photo ID are required" });
         }
@@ -74,6 +73,7 @@ export const savePhoto = async (req, res) => {
             { $addToSet: { viewedPhoto: photoId } }, 
             { new: true } 
         );
+
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }    
@@ -104,9 +104,7 @@ export const dbPhotos = async (req, res) => {
 export const sendSavedPhoto = async (req,res)=>{
     try {
         const {userId} = req.body;
-        console.log(userId)
         const user = await User.findById(userId)
-        console.log(user)
         const photos = await Promise.all(
             user.viewedPhoto.map(async (id) => {
                 return await Photo.findById(id);
