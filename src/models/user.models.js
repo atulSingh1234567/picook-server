@@ -36,6 +36,9 @@ const userSchema = new Schema({
     avatar: {
         type: String
     },
+    avatarCloudinaryPublicId: {
+        type: String
+    },
     viewedPhoto: [{
         type: Schema.Types.ObjectId,
         ref: 'Photo'

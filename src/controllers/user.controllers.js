@@ -109,7 +109,7 @@ const loginUser = async (req,res)=>{
     
     const isPasswordValid = await user.isPasswordCorrect(password);
     if(!isPasswordValid){
-        return res.status(401).json( {message : "Invalid user credentials"});
+        return res.status(401).json( {message : "Email or password is not valid"});
     }
 
     const {accessToken , refreshToken} = await generateAccessAndRefreshTokens(user._id);
@@ -162,6 +162,29 @@ export const changePassword = async function(req ,res){
     }
 }
 
+
+export const deleteUser = async (req,res)=>{
+    try {
+        const user = req.user;
+        console.log(user);
+        const deletedUser = await User.deleteOne({_id : user._id})
+        console.log(deletedUser)
+        return res.status(201).json({
+            message: "Your account has been deleted"
+        })
+    } catch (error) {
+        return res.status(500).json({
+            message: "Internal Server Error"
+        })
+    }
+}
+
+export const sendPhotoOwner = async (req,res)=>{
+    const {userId} = req.body;
+    if(!userId) return;
+    const owner = await User.findById(userId).select("-password -avatarCloudinaryPublicId -lastname -firstname -email -refreshToken -viewedPhoto")
+    return res.status(201).json({owner})
+}
 
 
 export {registerUser , loginUser}

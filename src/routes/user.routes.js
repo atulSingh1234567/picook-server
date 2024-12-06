@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { changePassword, editProfile, fetchUser, loginUser, registerUser, setCookie } from "../controllers/user.controllers.js";
+import { changePassword, editProfile, fetchUser, loginUser, registerUser,deleteUser, setCookie, sendPhotoOwner } from "../controllers/user.controllers.js";
 import { verifyJWT } from "../middlewares/auth.middlewares.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { setProfilePicture } from "../controllers/settingPhoto.controllers.js";
@@ -16,4 +16,7 @@ router.route('/edit-profile').post(verifyJWT , editProfile);
 router.route('/change-password').post(verifyJWT, changePassword);
 router.route('/fetch-user').post(verifyJWT , fetchUser);
 router.route('/change-profile-photo').post(upload.single('file'),setProfilePicture)
+router.route('/delete-account').post(verifyJWT , deleteUser)
+router.route('/photo-owner').post(sendPhotoOwner)
+
 export default router;

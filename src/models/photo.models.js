@@ -2,6 +2,10 @@ import { Schema , model } from "mongoose";
 import mongooseAggregatePaginate from 'mongoose-aggregate-paginate-v2'
 
 const photoSchema = new Schema({
+    cloudinaryPublicId: {
+        type: String,
+        required: true
+    },
     photoURL: {
         type: String,
         required: true
@@ -10,6 +14,12 @@ const photoSchema = new Schema({
         type: String,
         required: true,
         index: true
+    },
+    width: {
+        type: Number
+    },
+    height: {
+        type: Number
     },
     description: {
         type: String,
